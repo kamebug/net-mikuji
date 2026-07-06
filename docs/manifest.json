@@ -1,0 +1,25 @@
+{
+  "name": "NetMikuji — ロト数字ジェネレーター",
+  "short_name": "NetMikuji",
+  "description": "Gerador de números para Loto7, Loto6 e Mini Loto com histórico e estatísticas",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0f2e",
+  "theme_color": "#0b0f2e",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

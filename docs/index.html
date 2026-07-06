@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0f2e">
+  <meta name="description" content="Gerador de números para Loto7, Loto6 e Mini Loto">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>NetMikuji</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    /* =========================================================
+       TOKENS & RESET
+    ========================================================= */
+    :root {
+      --bg:        #0b0f2e;
+      --surface:   #141829;
+      --card:      #1c2240;
+      --border:    rgba(255,255,255,.1);
+      --border-hi: rgba(255,255,255,.2);
+      --txt:       #f0eff5;
+      --txt-sec:   #9b9bb5;
+      --txt-mut:   #5a5a78;
+      --radius:    10px;
+
+      /* Loto7 — azul */
+      --c7-bg:   #0c447c;
+      --c7-lit:  #b5d4f4;
+      --c7-mid:  #378add;
+
+      /* Loto6 — rosa */
+      --c6-bg:   #72243e;
+      --c6-lit:  #f4c0d1;
+      --c6-mid:  #d4537e;
+
+      /* Mini Loto — âmbar */
+      --cm-bg:   #633806;
+      --cm-lit:  #fac775;
+      --cm-mid:  #ba7517;
+
+      /* Bônus — neutro */
+      --cb-bg:   #2a2d44;
+      --cb-lit:  #9b9bb5;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      min-height: 100dvh;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* =========================================================
+       LAYOUT
+    ========================================================= */
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 0 80px;
+    }
+
+    /* Header */
+    .header {
+      padding: 20px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-logo {
+      display: flex;
+      flex-direction: column;
+    }
+    .header-logo .title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      color: var(--txt);
+    }
+    .header-logo .subtitle {
+      font-size: 11px;
+      color: var(--txt-mut);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .data-badge {
+      font-size: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px;
+      color: var(--txt-sec);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .data-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--txt-mut);
+    }
+    .data-badge.loaded .dot { background: #4caf8a; }
+
+    /* Abas de loteria */
+    .lottery-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 20px 20px 0;
+    }
+    .ltab {
+      flex: 1;
+      padding: 10px 4px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--txt-sec);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all .18s;
+      letter-spacing: .03em;
+    }
+    .ltab:hover { border-color: var(--border-hi); color: var(--txt); }
+    .ltab.active-7 { background: var(--c7-bg); color: var(--c7-lit); border-color: var(--c7-mid); }
+    .ltab.active-6 { background: var(--c6-bg); color: var(--c6-lit); border-color: var(--c6-mid); }
+    .ltab.active-m { background: var(--cm-bg); color: var(--cm-lit); border-color: var(--cm-mid); }
+
+    /* Chips de info */
+    .chips {
+      display: flex;
+      gap: 6px;
+      padding: 12px 20px 0;
+      flex-wrap: wrap;
+    }
+    .chip {
+      font-size: 11px;
+      color: var(--txt-sec);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    /* =========================================================
+       CARD PRINCIPAL
+    ========================================================= */
+    .main-card {
+      margin: 14px 20px 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px 20px;
+    }
+
+    /* Stage das bolas */
+    .stage {
+      min-height: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .balls-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .ball {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .ball-7  { background: var(--c7-bg); color: var(--c7-lit); }
+    .ball-6  { background: var(--c6-bg); color: var(--c6-lit); }
+    .ball-m  { background: var(--cm-bg); color: var(--cm-lit); }
+    .ball-b  { background: var(--cb-bg); color: var(--cb-lit); border: 1px solid var(--border-hi); }
+    .ball-empty {
+      font-size: 13px; color: var(--txt-mut);
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+      65%  { transform: scale(1.12) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .pop { animation: popIn .38s cubic-bezier(.34,1.56,.64,1) both; }
+
+    .bonus-wrap { text-align: center; }
+    .bonus-label {
+      font-size: 10px;
+      color: var(--txt-mut);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    /* Divider */
+    .div {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 18px 0;
+    }
+
+    /* Controles de geração */
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .strat-select {
+      flex: 1;
+      background: var(--surface);
+      color: var(--txt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 9px 12px;
+      font-size: 13px;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239b9bb5' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+      cursor: pointer;
+    }
+    .strat-select:focus { outline: none; border-color: var(--border-hi); }
+    .gen-btn {
+      padding: 9px 20px;
+      background: var(--c7-mid);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity .15s, transform .1s;
+      flex-shrink: 0;
+    }
+    .gen-btn:hover  { opacity: .9; }
+    .gen-btn:active { transform: scale(.97); }
+    .gen-btn.c-7 { background: var(--c7-mid); }
+    .gen-btn.c-6 { background: var(--c6-mid); }
+    .gen-btn.c-m { background: var(--cm-mid); }
+
+    /* Aviso de combinação repetida */
+    .warn-repeat {
+      display: none;
+      font-size: 11px;
+      color: var(--cm-lit);
+      text-align: center;
+      margin-top: 8px;
+    }
+    .warn-repeat.show { display: block; }
+
+    /* =========================================================
+       ABAS SECUNDÁRIAS (Estatísticas / Histórico)
+    ========================================================= */
+    .nav-tabs {
+      display: flex;
+      gap: 0;
+      margin: 16px 20px 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .ntab {
+      flex: 1;
+      padding: 9px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--txt-sec);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all .15s;
+      letter-spacing: .03em;
+    }
+    .ntab.active {
+      background: var(--surface);
+      color: var(--txt);
+    }
+    .ntab:not(:last-child) { border-right: 1px solid var(--border); }
+
+    /* Painéis */
+    .panel { display: none; margin: 0 20px; }
+    .panel.active { display: block; }
+
+    /* =========================================================
+       PAINEL: ESTATÍSTICAS
+    ========================================================= */
+    .stats-card {
+      margin-top: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .stats-title {
+      font-size: 11px;
+      color: var(--txt-mut);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 12px;
+    }
+    .freq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+      gap: 4px;
+    }
+    .freq-cell {
+      background: var(--surface);
+      border-radius: 6px;
+      padding: 5px 2px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: default;
+    }
+    .freq-cell:hover { background: var(--bg); }
+    .fn { font-size: 12px; font-weight: 600; color: var(--txt); }
+    .fb { height: 3px; width: 78%; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .ff { height: 3px; border-radius: 2px; transition: width .3s; }
+    .fv { font-size: 9px; color: var(--txt-mut); }
+
+    .no-data-msg {
+      text-align: center;
+      padding: 20px;
+      color: var(--txt-mut);
+      font-size: 13px;
+    }
+
+    /* =========================================================
+       PAINEL: HISTÓRICO
+    ========================================================= */
+    .hist-card {
+      margin-top: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .hist-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hist-search input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--txt);
+      font-size: 13px;
+      padding: 7px 12px;
+    }
+    .hist-search input:focus { outline: none; border-color: var(--border-hi); }
+    .hist-search input::placeholder { color: var(--txt-mut); }
+    .hist-table {
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse;
+    }
+    .hist-table th {
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--txt-mut);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+    }
+    .hist-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      color: var(--txt-sec);
+      vertical-align: middle;
+    }
+    .hist-table tr:last-child td { border-bottom: none; }
+    .hist-table tr:hover td { background: var(--surface); }
+    .hist-table .rnd { color: var(--txt); font-weight: 600; width: 48px; }
+    .hist-table .dt  { white-space: nowrap; width: 90px; }
+    .mini-balls { display: flex; gap: 3px; flex-wrap: wrap; }
+    .mini-ball {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .pager {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .pager button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--txt-sec);
+      border-radius: var(--radius);
+      padding: 5px 14px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .pager button:disabled { opacity: .35; cursor: default; }
+    .pager span { font-size: 11px; color: var(--txt-mut); }
+
+    /* =========================================================
+       AVISO LEGAL
+    ========================================================= */
+    .disclaimer {
+      margin: 16px 20px 0;
+      padding: 10px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 10px;
+      color: var(--txt-mut);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">
+      <span class="title">ロト Generator</span>
+      <span class="subtitle">Loto7 · Loto6 · Mini Loto</span>
+    </div>
+    <div class="data-badge" id="data-badge">
+      <span class="dot"></span>
+      <span id="badge-txt">carregando...</span>
+    </div>
+  </div>
+
+  <!-- Abas de loteria -->
+  <div class="lottery-tabs">
+    <button class="ltab active-7" id="tab-loto7"   onclick="setLottery('loto7',this)">ロト7</button>
+    <button class="ltab"          id="tab-loto6"   onclick="setLottery('loto6',this)">ロト6</button>
+    <button class="ltab"          id="tab-miniloto" onclick="setLottery('miniloto',this)">ミニロト</button>
+  </div>
+
+  <!-- Chips de info -->
+  <div class="chips">
+    <span class="chip" id="chip-range">1–37</span>
+    <span class="chip" id="chip-pick">7 números</span>
+    <span class="chip" id="chip-bonus">2 bônus</span>
+    <span class="chip" id="chip-draws">— sorteios</span>
+  </div>
+
+  <!-- Card principal -->
+  <div class="main-card">
+
+    <!-- Bolas -->
+    <div class="stage">
+      <div class="balls-row" id="main-balls">
+        <span class="ball-empty">toque em Gerar</span>
+      </div>
+      <div id="bonus-wrap" style="display:none">
+        <div class="balls-row" id="bonus-balls"></div>
+        <div class="bonus-label">bônus</div>
+      </div>
+    </div>
+
+    <div class="warn-repeat" id="warn-repeat">
+      ⚠ Combinação já sorteada — nova geração automática
+    </div>
+
+    <hr class="div">
+
+    <!-- Controles -->
+    <div class="controls">
+      <select class="strat-select" id="strat-sel">
+        <option value="uniform">Aleatório uniforme</option>
+        <option value="weighted" selected>Ponderado por frequência</option>
+        <option value="delayed">Números atrasados</option>
+      </select>
+      <button class="gen-btn c-7" id="gen-btn" onclick="generate()">
+        Gerar ▶
+      </button>
+    </div>
+
+  </div><!-- /main-card -->
+
+  <!-- Abas secundárias -->
+  <div class="nav-tabs">
+    <button class="ntab active" onclick="setPanel('stats',this)">Estatísticas</button>
+    <button class="ntab"        onclick="setPanel('hist',this)">Histórico</button>
+  </div>
+
+  <!-- Painel Estatísticas -->
+  <div class="panel active" id="panel-stats">
+    <div class="stats-card">
+      <div class="stats-title" id="stats-title">Frequência histórica — ロト7</div>
+      <div id="freq-grid" class="freq-grid"></div>
+      <div class="no-data-msg" id="stats-no-data" style="display:none">
+        Sem dados históricos.<br>Execute o scraper para carregar.
+      </div>
+    </div>
+  </div>
+
+  <!-- Painel Histórico -->
+  <div class="panel" id="panel-hist">
+    <div class="hist-card">
+      <div class="hist-search">
+        <input type="search" id="hist-search" placeholder="Buscar número…" oninput="filterHist()">
+      </div>
+      <div style="overflow-x:auto">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th class="rnd">#</th>
+              <th class="dt">Data</th>
+              <th>Números</th>
+            </tr>
+          </thead>
+          <tbody id="hist-body"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button id="pg-prev" onclick="changePage(-1)" disabled>← Ant</button>
+        <span id="pg-label">— / —</span>
+        <button id="pg-next" onclick="changePage(1)">Próx →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aviso legal -->
+  <div class="disclaimer">
+    ⚠ Este app é apenas para entretenimento. Nenhuma estratégia altera a probabilidade
+    real de acerto. Os sorteios são independentes e aleatórios.
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO DAS LOTERIAS
+============================================================ */
+const CFG = {
+  loto7:    { max:37, pick:7, bonus:2, bc:'ball-7', tab:'active-7', btnc:'c-7',
+               range:'1–37', pickLbl:'7 números', bonusLbl:'2 bônus', label:'ロト7' },
+  loto6:    { max:43, pick:6, bonus:1, bc:'ball-6', tab:'active-6', btnc:'c-6',
+               range:'1–43', pickLbl:'6 números', bonusLbl:'1 bônus', label:'ロト6' },
+  miniloto: { max:31, pick:5, bonus:1, bc:'ball-m', tab:'active-m', btnc:'c-m',
+               range:'1–31', pickLbl:'5 números', bonusLbl:'1 bônus', label:'ミニロト' },
+};
+
+/* Estado global */
+const STATE = {
+  cur:   'loto7',
+  data:  { loto7: null, loto6: null, miniloto: null },
+  drawn: { loto7: new Set(), loto6: new Set(), miniloto: new Set() },
+  freq:  { loto7: {}, loto6: {}, miniloto: {} },
+  histPage: 0,
+  histFiltered: [],
+};
+const PAGE_SIZE = 20;
+
+/* ============================================================
+   CARREGAMENTO DOS DADOS
+============================================================ */
+async function loadAll() {
+  const keys = ['loto7','loto6','miniloto'];
+  let loaded = 0;
+  for (const key of keys) {
+    try {
+      const r = await fetch(`data/${key}.json`);
+      if (!r.ok) throw new Error(r.status);
+      const json = await r.json();
+      STATE.data[key] = json;
+      buildIndex(key, json.draws);
+      loaded++;
+    } catch(e) {
+      console.warn(`${key}: sem dados (${e.message})`);
+    }
+  }
+  updateBadge(loaded);
+  refreshUI();
+}
+
+function buildIndex(key, draws) {
+  const freq = {};
+  const drawn = new Set();
+  for (const d of draws) {
+    const combo = [...d.numbers].sort((a,b)=>a-b).join(',');
+    drawn.add(combo);
+    for (const n of d.numbers) freq[n] = (freq[n]||0) + 1;
+  }
+  STATE.drawn[key] = drawn;
+  STATE.freq[key]  = freq;
+}
+
+function updateBadge(n) {
+  const badge = document.getElementById('data-badge');
+  const txt   = document.getElementById('badge-txt');
+  if (n === 0) {
+    txt.textContent = 'sem dados';
+  } else {
+    badge.classList.add('loaded');
+    const total = Object.values(STATE.data)
+      .filter(Boolean)
+      .reduce((s,d) => s + (d.draws?.length||0), 0);
+    txt.textContent = `${total.toLocaleString()} sorteios`;
+  }
+}
+
+/* ============================================================
+   TROCA DE LOTERIA
+============================================================ */
+function setLottery(key, btn) {
+  STATE.cur = key;
+  const c = CFG[key];
+
+  document.querySelectorAll('.ltab').forEach(b =>
+    b.classList.remove('active-7','active-6','active-m'));
+  btn.classList.add(c.tab);
+
+  document.getElementById('chip-range').textContent  = c.range;
+  document.getElementById('chip-pick').textContent   = c.pickLbl;
+  document.getElementById('chip-bonus').textContent  = c.bonusLbl;
+
+  const d = STATE.data[key];
+  document.getElementById('chip-draws').textContent =
+    d ? `${d.draws.length.toLocaleString()} sorteios` : '— sorteios';
+
+  const btn2 = document.getElementById('gen-btn');
+  btn2.className = `gen-btn ${c.btnc}`;
+
+  clearBalls();
+  renderFreq();
+  renderHist();
+}
+
+/* ============================================================
+   GERAÇÃO DE NÚMEROS
+============================================================ */
+function pickWeighted(freq, max, n, exclude) {
+  const pool = Array.from({length:max},(_,i)=>i+1).filter(x=>!exclude.includes(x));
+  const w    = pool.map(x => freq[x] || 1);
+  const out  = [];
+  while (out.length < n && pool.length) {
+    const tot = w.reduce((a,b)=>a+b,0);
+    let r = Math.random() * tot, acc = 0;
+    for (let i = 0; i < pool.length; i++) {
+      acc += w[i];
+      if (r <= acc) { out.push(pool.splice(i,1)[0]); w.splice(i,1); break; }
+    }
+  }
+  return out.sort((a,b)=>a-b);
+}
+
+function pickUniform(max, n, exclude) {
+  const pool = Array.from({length:max},(_,i)=>i+1).filter(x=>!exclude.includes(x));
+  const out  = [];
+  while (out.length < n) {
+    const i = Math.floor(Math.random() * pool.length);
+    out.push(pool.splice(i,1)[0]);
+  }
+  return out.sort((a,b)=>a-b);
+}
+
+function pickDelayed(freq, max, n, exclude) {
+  const inv = {};
+  for (let i = 1; i <= max; i++) inv[i] = 1 / (freq[i] || 1);
+  return pickWeighted(inv, max, n, exclude);
+}
+
+function isDrawn(nums) {
+  const combo = [...nums].sort((a,b)=>a-b).join(',');
+  return STATE.drawn[STATE.cur].has(combo);
+}
+
+function generate() {
+  const key  = STATE.cur;
+  const c    = CFG[key];
+  const freq = STATE.freq[key];
+  const strat = document.getElementById('strat-sel').value;
+  const warn  = document.getElementById('warn-repeat');
+
+  let nums, attempts = 0, repeated = false;
+  do {
+    if (strat === 'weighted') nums = pickWeighted(freq, c.max, c.pick, []);
+    else if (strat === 'delayed') nums = pickDelayed(freq, c.max, c.pick, []);
+    else nums = pickUniform(c.max, c.pick, []);
+    attempts++;
+    if (isDrawn(nums) && attempts === 1) repeated = true;
+  } while (isDrawn(nums) && attempts < 500);
+
+  warn.classList.toggle('show', repeated && attempts > 1);
+
+  const bonus = pickUniform(c.max, c.bonus, nums);
+  renderBalls(nums, bonus, c.bc);
+}
+
+/* ============================================================
+   RENDERIZAÇÃO DAS BOLAS
+============================================================ */
+function renderBalls(nums, bonus, ballClass) {
+  const mr = document.getElementById('main-balls');
+  mr.innerHTML = '';
+  nums.forEach((n, i) => {
+    const b = document.createElement('div');
+    b.className = `ball ${ballClass} pop`;
+    b.style.animationDelay = `${i * 0.07}s`;
+    b.textContent = String(n).padStart(2,'0');
+    mr.appendChild(b);
+  });
+
+  const bw = document.getElementById('bonus-wrap');
+  const br = document.getElementById('bonus-balls');
+  br.innerHTML = '';
+  bonus.forEach((n, i) => {
+    const b = document.createElement('div');
+    b.className = `ball ball-b pop`;
+    b.style.animationDelay = `${(nums.length + i) * 0.07}s`;
+    b.textContent = String(n).padStart(2,'0');
+    br.appendChild(b);
+  });
+  bw.style.display = bonus.length ? 'block' : 'none';
+}
+
+function clearBalls() {
+  document.getElementById('main-balls').innerHTML =
+    '<span class="ball-empty">toque em Gerar</span>';
+  document.getElementById('bonus-wrap').style.display = 'none';
+  document.getElementById('bonus-balls').innerHTML = '';
+  document.getElementById('warn-repeat').classList.remove('show');
+}
+
+/* ============================================================
+   PAINEL ESTATÍSTICAS
+============================================================ */
+function renderFreq() {
+  const key  = STATE.cur;
+  const c    = CFG[key];
+  const freq = STATE.freq[key];
+  const grid = document.getElementById('freq-grid');
+  const noData = document.getElementById('stats-no-data');
+  document.getElementById('stats-title').textContent =
+    `Frequência histórica — ${c.label}`;
+
+  grid.innerHTML = '';
+  const hasData = Object.keys(freq).length > 0;
+  noData.style.display = hasData ? 'none' : 'block';
+  if (!hasData) return;
+
+  const vals = Object.values(freq);
+  const maxF = Math.max(...vals);
+
+  for (let i = 1; i <= c.max; i++) {
+    const v   = freq[i] || 0;
+    const pct = maxF ? Math.round(v / maxF * 100) : 0;
+    const cell = document.createElement('div');
+    cell.className = 'freq-cell';
+    cell.title = `Número ${i}: ${v} sorteios`;
+    cell.innerHTML =
+      `<span class="fn">${i}</span>` +
+      `<div class="fb"><div class="ff" style="width:${pct}%;background:var(--${key==='loto7'?'c7':key==='loto6'?'c6':'cm'}-mid)"></div></div>` +
+      `<span class="fv">${v}</span>`;
+    grid.appendChild(cell);
+  }
+}
+
+/* ============================================================
+   PAINEL HISTÓRICO
+============================================================ */
+function renderHist() {
+  const key = STATE.cur;
+  const d   = STATE.data[key];
+  const search = document.getElementById('hist-search').value.trim();
+  const draws  = d ? [...d.draws].reverse() : [];
+
+  if (search) {
+    const nums = search.split(/[\s,]+/).map(Number).filter(Boolean);
+    STATE.histFiltered = draws.filter(draw =>
+      nums.every(n => draw.numbers.includes(n) || draw.bonus.includes(n))
+    );
+  } else {
+    STATE.histFiltered = draws;
+  }
+
+  STATE.histPage = 0;
+  renderHistPage();
+}
+
+function renderHistPage() {
+  const key  = STATE.cur;
+  const c    = CFG[key];
+  const rows = STATE.histFiltered;
+  const page = STATE.histPage;
+  const total = Math.ceil(rows.length / PAGE_SIZE) || 1;
+  const slice = rows.slice(page * PAGE_SIZE, (page+1) * PAGE_SIZE);
+
+  const tbody = document.getElementById('hist-body');
+  tbody.innerHTML = '';
+
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--txt-mut)">
+      Sem sorteios ${STATE.data[key] ? 'encontrados' : '— execute o scraper primeiro'}
+    </td></tr>`;
+  } else {
+    for (const draw of slice) {
+      const tr = document.createElement('tr');
+      const miniBalls = draw.numbers.map(n =>
+        `<div class="mini-ball ${c.bc}" style="font-size:9px">${String(n).padStart(2,'0')}</div>`
+      ).join('') +
+      draw.bonus.map(n =>
+        `<div class="mini-ball ball-b" style="font-size:9px">${String(n).padStart(2,'0')}</div>`
+      ).join('');
+      tr.innerHTML =
+        `<td class="rnd">${draw.round}</td>` +
+        `<td class="dt">${draw.date}</td>` +
+        `<td><div class="mini-balls">${miniBalls}</div></td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  document.getElementById('pg-label').textContent =
+    `${page+1} / ${total}`;
+  document.getElementById('pg-prev').disabled = page === 0;
+  document.getElementById('pg-next').disabled = page >= total - 1;
+}
+
+function filterHist() { renderHist(); }
+function changePage(dir) {
+  const total = Math.ceil(STATE.histFiltered.length / PAGE_SIZE);
+  STATE.histPage = Math.max(0, Math.min(STATE.histPage + dir, total - 1));
+  renderHistPage();
+}
+
+/* ============================================================
+   TROCA DE PAINEL SECUNDÁRIO
+============================================================ */
+function setPanel(name, btn) {
+  document.querySelectorAll('.ntab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+}
+
+/* ============================================================
+   ATUALIZA UI APÓS CARGA DE DADOS
+============================================================ */
+function refreshUI() {
+  const key = STATE.cur;
+  const d   = STATE.data[key];
+  document.getElementById('chip-draws').textContent =
+    d ? `${d.draws.length.toLocaleString()} sorteios` : '— sorteios';
+  renderFreq();
+  renderHist();
+}
+
+/* ============================================================
+   SERVICE WORKER
+============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('./sw.js')
+      .catch(e => console.warn('SW:', e))
+  );
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+loadAll();
+</script>
+</body>
+</html>
