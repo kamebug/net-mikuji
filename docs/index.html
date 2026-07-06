@@ -330,9 +330,98 @@
     .bnav-btn.active { color: var(--teal); }
     .bnav-btn:hover { color: var(--txt-sec); }
     .bnav-btn.active:hover { color: var(--teal); }
+
+    /* ── DISCLAIMER CLICKWRAP ── */
+    .disc-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,.88);
+      display: flex; align-items: flex-end; justify-content: center;
+      padding: 16px;
+    }
+    .disc-overlay.hidden { display: none; }
+    .disc-modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--teal);
+      border-radius: var(--radius);
+      padding: 24px 20px 20px;
+      width: 100%; max-width: 480px;
+      max-height: 90dvh; overflow-y: auto;
+    }
+    .disc-icon { font-size: 30px; text-align: center; margin-bottom: 8px; }
+    .disc-title {
+      font-size: 15px; font-weight: 700; color: var(--teal);
+      text-align: center; margin-bottom: 16px;
+      letter-spacing: .05em; text-transform: uppercase;
+    }
+    .disc-sec { margin-bottom: 14px; }
+    .disc-sec h3 {
+      font-size: 10px; color: var(--amber);
+      text-transform: uppercase; letter-spacing: .1em;
+      font-weight: 700; margin-bottom: 5px;
+    }
+    .disc-sec p { font-size: 13px; color: var(--txt-sec); line-height: 1.6; }
+    .disc-div { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .disc-check {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;
+    }
+    .disc-check input[type=checkbox] {
+      width: 20px; height: 20px; flex-shrink: 0;
+      accent-color: var(--teal); cursor: pointer; margin-top: 2px;
+    }
+    .disc-check label { font-size: 13px; color: var(--txt-sec); line-height: 1.5; cursor: pointer; }
+    .disc-btn {
+      width: 100%; padding: 13px;
+      background: var(--teal); color: #000;
+      border: none; border-radius: var(--radius);
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      opacity: .35; transition: opacity .2s;
+    }
+    .disc-btn:not(:disabled) { opacity: 1; }
+    .disc-btn:not(:disabled):hover { opacity: .85; }
   </style>
 </head>
 <body>
+
+<!-- Disclaimer Clickwrap -->
+<div class="disc-overlay" id="disc-overlay">
+  <div class="disc-modal">
+    <div class="disc-icon">⚠️</div>
+    <div class="disc-title">Aviso Important — 重要なお知らせ</div>
+
+    <div class="disc-sec">
+      <h3>Entretenimento apenas</h3>
+      <p>O NetMikuji gera combinações aleatórias para fins de entretenimento. Os números gerados não têm qualquer vantagem estatística sobre qualquer outra combinação.</p>
+    </div>
+
+    <div class="disc-sec">
+      <h3>Probabilidade real</h3>
+      <p>Cada sorteio é independente. Frequências históricas, números "atrasados" e qualquer outra estratégia <strong style="color:var(--txt)">não aumentam sua chance de ganhar</strong>. A probabilidade é sempre a mesma.</p>
+    </div>
+
+    <div class="disc-sec">
+      <h3>Jogue com responsabilidade</h3>
+      <p>Aposte somente valores que pode perder. Se o jogo estiver causando problemas financeiros ou emocionais, procure ajuda.</p>
+    </div>
+
+    <div class="disc-sec">
+      <h3>Isenção de responsabilidade</h3>
+      <p>Este aplicativo não é afiliado à Mizuho Bank, à loteria oficial japonesa nem a qualquer entidade governamental. Os dados históricos são obtidos via scraping público e podem conter imprecisões.</p>
+    </div>
+
+    <hr class="disc-div">
+
+    <div class="disc-check">
+      <input type="checkbox" id="disc-cb" onchange="document.getElementById('disc-btn').disabled=!this.checked">
+      <label for="disc-cb">Li e entendi os termos acima. Usarei o NetMikuji apenas para entretenimento e dentro das minhas possibilidades financeiras.</label>
+    </div>
+
+    <button class="disc-btn" id="disc-btn" disabled onclick="acceptDisclaimer()">
+      Entendi — Continuar ▶
+    </button>
+  </div>
+</div>
+
 
 <!-- Header -->
 <header class="header">
@@ -660,6 +749,20 @@ if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW:',e)));
 }
 
+
+function acceptDisclaimer() {
+  localStorage.setItem('netmikuji_accepted', '1');
+  document.getElementById('disc-overlay').classList.add('hidden');
+}
+function checkDisclaimer() {
+  if (!localStorage.getItem('netmikuji_accepted')) {
+    document.getElementById('disc-overlay').classList.remove('hidden');
+  } else {
+    document.getElementById('disc-overlay').classList.add('hidden');
+  }
+}
+
+checkDisclaimer();
 loadAll();
 </script>
 </body>
