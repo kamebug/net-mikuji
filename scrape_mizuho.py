@@ -30,7 +30,7 @@ from pathlib import Path
 # CONFIGURAÇÃO
 # ==============================================================================
 
-OUTPUT_DIR = Path(__file__).parent.parent / "docs" / "data"
+OUTPUT_DIR = Path(__file__).parent / "docs" / "data"
 
 LOTTERIES = {
     "loto6": {

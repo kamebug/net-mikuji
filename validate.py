@@ -14,7 +14,7 @@ import argparse
 from pathlib import Path
 from collections import Counter
 
-OUTPUT_DIR = Path(__file__).parent.parent / "docs" / "data"
+OUTPUT_DIR = Path(__file__).parent / "docs" / "data"
 
 LOTTERIES = {
     "loto6":    {"max_num": 43, "pick": 6, "bonus": 1},
