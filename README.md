@@ -2,90 +2,104 @@
 
 PWA em HTML/JS puro para gerar números para **Loto7**, **Loto6** e **Mini Loto** (loterias japonesas), com filtro de combinações já sorteadas e estatísticas históricas.
 
-Hospedado em **GitHub Pages** (`kamebug.github.io/net-mikuji/`) — acessível de qualquer dispositivo sem instalação.
+App em: **kamebug.github.io/net-mikuji/**
 
 ---
 
-## Estrutura
+## Estrutura da pasta
 
 ```
-loto-pwa/
-├── docs/                  ← GitHub Pages (branch main)
-│   ├── index.html         ← App principal (PWA)
-│   ├── manifest.json      ← PWA manifest
-│   ├── sw.js              ← Service worker (offline)
+Net Mikuji/
+├── docs/                  <- GitHub Pages (branch main)
+│   ├── index.html         <- App principal (PWA)
+│   ├── manifest.json      <- PWA manifest
+│   ├── sw.js              <- Service worker (offline)
+│   ├── .nojekyll          <- Desabilita Jekyll
 │   └── data/
-│       ├── loto6.json     ← Histórico Loto6
-│       ├── loto7.json     ← Histórico Loto7
-│       └── miniloto.json  ← Histórico Mini Loto
-├── scraper/
-│   ├── scrape_mizuho.py   ← Captura histórico completo
-│   ├── update.py          ← Atualiza só sorteios novos
-│   ├── validate.py        ← Verifica integridade dos JSONs
-│   └── requirements.txt
-├── deploy.ps1
+│       ├── loto6.json     <- Historico Loto6
+│       ├── loto7.json     <- Historico Loto7
+│       └── miniloto.json  <- Historico Mini Loto
+├── .github/
+│   └── workflows/
+│       └── update-data.yml  <- Atualizacao automatica (toda segunda)
+├── scrape_mizuho.py       <- Scraper historico completo
+├── update.py              <- Atualiza so sorteios novos
+├── validate.py            <- Verifica integridade dos JSONs
+├── deploy.ps1             <- Script de deploy
 └── README.md
 ```
 
 ---
 
-## Primeiro uso — capturar histórico
+## Instalacao (primeira vez)
 
 ```powershell
-cd scraper
-pip install -r requirements.txt
-
-# Raspa todo o histórico (demora ~30 min por loteria)
-python scrape_mizuho.py
-
-# Valida os JSONs gerados
-python validate.py
+py -m pip install requests beautifulsoup4 lxml selenium
 ```
 
-## Atualizações periódicas
+---
+
+## Capturar historico completo (primeira vez)
 
 ```powershell
-cd scraper
-python update.py   # só baixa sorteios novos
-python validate.py
-```
-
-## Deploy
-
-```powershell
+py scrape_mizuho.py
+py validate.py
 powershell -ExecutionPolicy Bypass -File ".\deploy.ps1"
 ```
 
 ---
 
-## Loterias suportadas
+## Atualizar manualmente
 
-| Loteria   | Range  | Números | Bônus |
-|-----------|--------|---------|-------|
-| Loto7     | 1–37   | 7       | 2     |
-| Loto6     | 1–43   | 6       | 1     |
-| Mini Loto | 1–31   | 5       | 1     |
+```powershell
+py update.py
+py validate.py
+powershell -ExecutionPolicy Bypass -File ".\deploy.ps1"
+```
 
 ---
 
-## Estratégias de geração
+## Atualizacao automatica
 
-- **Aleatório uniforme** — probabilidade igual para todos os números
-- **Ponderado por frequência** — favorece números mais frequentes historicamente
-- **Números atrasados** — favorece números que não saem há mais tempo
+O arquivo `.github/workflows/update-data.yml` roda o scraper automaticamente
+toda segunda-feira as 21h JST via GitHub Actions — sem precisar abrir o PC.
 
-> ⚠️ Nenhuma estratégia aumenta a probabilidade real de ganhar. As frequências históricas são informativas, não preditivas.
+Para rodar manualmente pelo GitHub:
+1. Acesse github.com/kamebug/net-mikuji/actions
+2. Clique em "Atualizar dados"
+3. Clique em "Run workflow"
+
+---
+
+## Loterias suportadas
+
+| Loteria   | Range | Numeros | Bonus |
+|-----------|-------|---------|-------|
+| Loto7     | 1-37  | 7       | 2     |
+| Loto6     | 1-43  | 6       | 1     |
+| Mini Loto | 1-31  | 5       | 1     |
+
+---
+
+## Estrategias de geracao
+
+- Aleatorio uniforme: probabilidade igual para todos os numeros
+- Ponderado por frequencia: favorece numeros mais frequentes historicamente
+- Numeros atrasados: favorece numeros que nao saem ha mais tempo
+
+Nenhuma estrategia aumenta a probabilidade real de ganhar.
+As frequencias historicas sao informativas, nao preditivas.
 
 ---
 
 ## Fonte dos dados
 
-Resultados históricos raspados do site da **Mizuho Bank**
-(`mizuhobank.co.jp/takarakuji/check/loto/`).
-Não há API oficial — atualização manual via `update.py`.
+Resultados raspados do site da Mizuho Bank
+(mizuhobank.co.jp/takarakuji/check/loto/).
+Nao ha API oficial.
 
 ---
 
-## Licença
+## Licenca
 
 MIT
