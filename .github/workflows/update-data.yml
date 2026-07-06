@@ -1,0 +1,41 @@
+name: Atualizar dados
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'  # toda segunda-feira às 12:00 UTC (21:00 JST)
+  workflow_dispatch:        # permite rodar manualmente pelo GitHub
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências
+        run: pip install requests beautifulsoup4 lxml selenium
+
+      - name: Instalar Chrome
+        run: |
+          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
+
+      - name: Atualizar dados
+        run: python update.py
+
+      - name: Validar dados
+        run: python validate.py
+
+      - name: Commit e push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/
+          git diff --staged --quiet || git commit -m "data: atualiza sorteios [$(date +%Y-%m-%d)]"
+          git push
