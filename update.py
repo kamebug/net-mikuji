@@ -7,15 +7,15 @@ Uso:
     python update.py              # atualiza os três
     python update.py --type loto6
 """
-
 import argparse
+from selenium import webdriver
 from scrape_mizuho import (
     LOTTERIES, load_existing, scrape_lottery,
-    save_json, validate_draws, get_latest_round
+    save_json, validate_draws, get_latest_round, make_driver
 )
 
 
-def update_lottery(lottery_key: str):
+def update_lottery(driver: webdriver.Chrome, lottery_key: str):
     existing, last_round = load_existing(lottery_key)
 
     if not existing:
@@ -23,7 +23,7 @@ def update_lottery(lottery_key: str):
               f"Execute scrape_mizuho.py primeiro.")
         return
 
-    latest = get_latest_round(lottery_key)
+    latest = get_latest_round(driver, lottery_key)
     if latest <= last_round:
         print(f"  {lottery_key}: já atualizado (local={last_round}, remoto={latest})")
         return
@@ -31,11 +31,12 @@ def update_lottery(lottery_key: str):
     print(f"  {lottery_key}: {latest - last_round} sorteio(s) novo(s) "
           f"(rodadas {last_round+1}–{latest})")
 
-    new_draws = scrape_lottery(lottery_key, start_from=last_round + 1)
+    new_draws = scrape_lottery(driver, lottery_key, start_from=last_round + 1)
 
     existing_rounds = {d["round"] for d in existing}
     merged = existing + [d for d in new_draws if d["round"] not in existing_rounds]
     merged.sort(key=lambda d: d["round"])
+
     final = validate_draws(merged, lottery_key)
     save_json(lottery_key, final)
 
@@ -49,9 +50,13 @@ def main():
     targets = (["loto6", "loto7", "miniloto"]
                if args.type == "all" else [args.type])
 
-    for key in targets:
-        print(f"\n--- {LOTTERIES[key]['label']} ---")
-        update_lottery(key)
+    driver = make_driver()
+    try:
+        for key in targets:
+            print(f"\n--- {LOTTERIES[key]['label']} ---")
+            update_lottery(driver, key)
+    finally:
+        driver.quit()
 
     print("\n✓ Atualização concluída.")
 
