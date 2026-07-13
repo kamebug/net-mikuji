@@ -1,8 +1,8 @@
 {
   "lottery": "loto6",
   "label": "Loto6",
-  "last_updated": "2026-07-08",
-  "total_draws": 2117,
+  "last_updated": "2026-07-13",
+  "total_draws": 2119,
   "draws": [
     {
       "round": 1,
@@ -31757,6 +31757,36 @@
       ],
       "bonus": [
         34
+      ]
+    },
+    {
+      "round": 2118,
+      "date": "2026-07-09",
+      "numbers": [
+        1,
+        5,
+        8,
+        35,
+        36,
+        37
+      ],
+      "bonus": [
+        24
+      ]
+    },
+    {
+      "round": 2119,
+      "date": "2026-07-13",
+      "numbers": [
+        15,
+        18,
+        20,
+        22,
+        30,
+        38
+      ],
+      "bonus": [
+        42
       ]
     }
   ]
