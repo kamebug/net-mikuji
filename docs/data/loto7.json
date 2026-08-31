@@ -1,8 +1,8 @@
 {
   "lottery": "loto7",
   "label": "Loto7",
-  "last_updated": "2026-08-24",
-  "total_draws": 691,
+  "last_updated": "2026-08-31",
+  "total_draws": 692,
   "draws": [
     {
       "round": 1,
@@ -11749,6 +11749,23 @@
       "bonus": [
         2,
         9
+      ]
+    },
+    {
+      "round": 692,
+      "date": "2026-08-28",
+      "numbers": [
+        7,
+        9,
+        15,
+        18,
+        20,
+        28,
+        31
+      ],
+      "bonus": [
+        21,
+        34
       ]
     }
   ]
