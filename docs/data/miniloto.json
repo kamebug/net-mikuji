@@ -1,8 +1,8 @@
 {
   "lottery": "miniloto",
   "label": "Mini Loto",
-  "last_updated": "2026-09-28",
-  "total_draws": 1405,
+  "last_updated": "2026-10-05",
+  "total_draws": 1406,
   "draws": [
     {
       "round": 1,
@@ -19672,6 +19672,20 @@
       ],
       "bonus": [
         6
+      ]
+    },
+    {
+      "round": 1406,
+      "date": "2026-09-29",
+      "numbers": [
+        11,
+        14,
+        27,
+        30,
+        31
+      ],
+      "bonus": [
+        13
       ]
     }
   ]
